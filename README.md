@@ -5,4 +5,8 @@ This is adapter for WiFi-based Xiaomi devices to work with [Mozilla WoT Gateway]
 
 Supported devices:
 
-- `chuangmi.plug.m1`: Xiaomi WiFi Power Plug
+- `chuangmi.plug.m1`: WiFi Power Plug
+- `lumi.gateway.v3`
+  - gateway light control
+  - children devices:
+    - `lumi.plug`: ZigBee Power Plug + power measurement

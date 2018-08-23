@@ -1,6 +1,7 @@
 'use strict';
 
 const miio = require('miio');
+const { color } = require('abstract-things/values');
 
 let Action, Adapter, Device, Event, Property;
 try {
@@ -21,7 +22,8 @@ try {
 }
 
 const TypeMapping = {
-  'miio:power-plug': 'SmartPlug',
+  'power-plug': 'SmartPlug',
+  light: 'Light',
 };
 
 const CapabilitiesMapping = {
@@ -42,17 +44,50 @@ const CapabilitiesMapping = {
       },
     },
   },
+  'power-load': {
+    properties: {
+      load: {
+        metadata: {
+          label: 'Power',
+          type: 'number',
+          unit: 'watt',
+          '@type': 'InstantaneousPowerProperty',
+        },
+        async get() {
+          const { watt } = await this.powerLoad();
+          return watt;
+        },
+      },
+    },
+  },
+  colorable: {
+    properties: {
+      load: {
+        metadata: {
+          label: 'Color',
+          type: 'string',
+          '@type': 'ColorProperty',
+        },
+        async get() {
+          const { hex } = await this.powerLoad();
+          return hex;
+        },
+        set(value) {
+          return this.setColor(color(value));
+        },
+      },
+    },
+  },
 };
 
 class AbstractThingProperty extends Property {
   constructor(device, name, descr, propInfo) {
     super(device, name, descr);
     this.propInfo = propInfo;
-    console.log('fetching initial state', name);
     propInfo.get.call(this.device.thing).then(
       value => {
-        console.log('getting initial state', value);
         this.setCachedValue(value);
+        this.device.notifyPropertyChanged(this);
       },
       error => {
         console.error('error getting initial value', error);
@@ -73,7 +108,7 @@ class AbstractThingDevice extends Device {
     super(adapter, id);
 
     this.thing = thing;
-    this.name = thing.miioModel;
+    this.name = thing.miioModel || thing.model;
 
     this['@type'] = Array.from(thing.metadata.types)
       .map(type => TypeMapping[type])
@@ -85,7 +120,6 @@ class AbstractThingDevice extends Device {
         continue;
       }
       const { properties } = CapabilitiesMapping[cap];
-      console.log('adding cap', cap);
       for (const [propName, propInfo] of Object.entries(properties)) {
         this.properties.set(
           propName,
@@ -119,6 +153,11 @@ class MiioAdapter extends Adapter {
       }
       try {
         new AbstractThingDevice(this, info.device.id, info.device);
+        if (info.device.matches('cap:children')) {
+          for (const child of info.device.children()) {
+            new AbstractThingDevice(this, child.id, child);
+          }
+        }
       } catch (error) {
         console.error(error);
       }
@@ -130,7 +169,8 @@ class MiioAdapter extends Adapter {
   }
 
   startPairing(timeoutSeconds) {
-    this.discoverDevices();
+    // TODO: Do we need to re-discover? Do we need to stop previous browser?
+    // this.discoverDevices();
   }
 }
 
