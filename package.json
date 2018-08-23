@@ -1,0 +1,30 @@
+{
+  "name": "miio-adapter",
+  "display_name": "MI Adapter",
+  "version": "1.0.0",
+  "description": "Xiaomi miio adapter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "kabbi",
+  "license": "ISC",
+  "dependencies": {
+    "miio": "^0.15.6"
+  },
+  "files": [
+    "LICENSE",
+    "SHA256SUMS",
+    "index.js",
+    "miio-adapter.js"
+  ],
+  "moziot": {
+    "api": {
+      "min": 1,
+      "max": 2
+    },
+    "plugin": true,
+    "exec": "{nodeLoader} {path}"
+  }
+}
